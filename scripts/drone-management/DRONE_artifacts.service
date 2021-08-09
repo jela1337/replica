@@ -1,0 +1,6 @@
+[Unit]
+Description=Manage DRONE artifacts
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/bin/DRONE_manage_artifacts.sh

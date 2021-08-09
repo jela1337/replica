@@ -1,0 +1,9 @@
+[Unit]
+Description=Manage DRONE artifacts timer
+
+[Timer]
+OnUnitActiveSec=4h
+OnBootSec=1h
+
+[Install]
+WantedBy=timers.target
