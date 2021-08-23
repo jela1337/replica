@@ -1,5 +1,6 @@
 Replica.one
 ===========
+[![Build Status](https://drone.sartura.hr/api/badges/jela1337/replica/status.svg?ref=refs/heads/master)](https://drone.sartura.hr/jela1337/replica)
 
 Replica.one is an Open Source build system based on Gentoo with speed and flexibility in mind.
 
