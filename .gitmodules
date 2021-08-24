@@ -6,4 +6,4 @@
 	url = https://github.com/gentoo/musl.git
 [submodule "repos/replica"]
 	path = repos/replica
-	url = https://github.com/sartura/replica-overlay-main.git
+	url = https://github.com/jela1337/replica-overlay-main.git

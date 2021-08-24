@@ -1,0 +1,118 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+#
+# Copyright (c) 2021 Sartura Ltd.
+#
+
+source /etc/profile
+
+set -e
+set -u
+shopt -s nullglob
+
+# Target variables
+TDEVICE=generic-${BTARGET}
+
+# Output variables
+ODIR=/output
+OWNER=$(stat -c '%u:%g' ${ODIR})
+OIMG="${ODIR}/gentoo-${TPARCH}-${TDEVICE}.img"
+OFILE=""
+OROOTFS=${WITH_ROOTFS:-0}
+export XZ_OPT="-2 -T0" # multithreaded
+
+# Check whether the output directory exists
+if [[ ! -d ${ODIR} ]]; then
+	echo "docker-entrypoint: output directory does not exist!"
+	exit 1
+fi
+
+# This file contains various data about installed packages, depgraph, etc.
+mv ${SYSROOT}/sysdesc ${ODIR}/sysdesc-${TPARCH}-${BTARGET}.txt
+
+# Generate and partition a relatively large image
+# TODO: Research a better way to do this, without wasted space and large files.
+fallocate -l 2048M ${OIMG}
+sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${OIMG}
+  g # create GUID Partition Table
+  n #
+  1 # (boot partition)
+    # default - start at beginning of disk
+  +64M #
+  t #
+  4 # BIOS boot
+  n #
+  2 # (root partition)
+    # default, start immediately after preceding partition
+    # default, extend partition to end of disk
+  p #
+  w # write the partition table
+  q # done
+EOF
+
+# Setup the image file as a loopback device for formatting
+# NOTE: Using `--partscan` here would register only in the default namespace.
+if ! ODEV=$(losetup --show --find ${OIMG}); then
+	echo "docker-entrypoint: unable to setup a loopback device!"
+	exit 1
+elif ! kpartx -usv ${ODEV}; then
+	echo "docker-entrypoint: unable to update partition mappings!"
+	exit 1
+fi
+
+MDIR=$(mktemp -d)
+ODEVN=$(basename ${ODEV})
+ROOTDEVICE=""
+
+# install MBR and set legacy BIOS bootable flag
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=${ODEV}
+sgdisk --attributes='1:set:2' ${ODEV}
+
+# setup root data partition
+mkfs.ext4 -F /dev/mapper/${ODEVN}p2
+ROOTDEVICE="PARTUUID=$(blkid /dev/mapper/${ODEVN}p2 -s PARTUUID -o value)"
+
+mount /dev/mapper/${ODEVN}p2 ${MDIR}
+	rsync --archive --hard-links --info=progress2 ${SYSROOT}/. ${MDIR}
+
+	ssh-keygen -q -N '' -t ed25519 -C "$(whoami)@$(uname -n)-$(date -I)" \
+		-f ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key <<< "y" >/dev/null
+
+	install -dm 700 ${MDIR}/root/.ssh
+	install -Tm 600 ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key.pub \
+		${MDIR}/root/.ssh/authorized_keys
+	cp ${SYSROOT}/usr/local/root/.ssh/authorized_keys2 ${MDIR}/root/.ssh/authorized_keys2
+
+	# NOTE: This enforces unique root filesystem identification.
+	sed -i "s/%%ROOTDEVICE%%/${ROOTDEVICE}/g" ${MDIR}/etc/fstab
+umount ${MDIR}
+
+# format and setup BIOS boot partition
+mkfs.vfat -F32 /dev/mapper/${ODEVN}p1
+syslinux --install /dev/mapper/${ODEVN}p1
+mount /dev/mapper/${ODEVN}p1 ${MDIR}
+	mv ${SYSROOT}/boot/* ${MDIR}/
+
+	# NOTE: The genkernel-generated initramfs mounts rootfs as ro instead of rw
+	#       which breaks systemd first-boot steps. Thus, we pass `real_rootflags`
+	#       to mitigate this issue.
+
+	# NOTE: This enforces unique root filesystem identification.
+	sed -i "s/%%ROOTDEVICE%%/${ROOTDEVICE}/g" ${MDIR}/syslinux.cfg
+umount ${MDIR}
+
+if (( OROOTFS )); then
+	# Package the root filesystem as a compressed archive
+	# NOTE: We use `.` to specify contents of the current (SYSROOT) directory.
+	OFILE="${ODIR}/rootfs-${TPARCH}-${TDEVICE}.tar.xz"
+	tar --directory=${SYSROOT} --totals --create --xz --file ${OFILE} .
+fi
+
+# Fix permissions
+chown ${OWNER} -R ${ODIR}
+
+# Flush cached writes, remove devices
+sync && kpartx -dv ${ODEV} && losetup -vd ${ODEV}
+
+# Compress resulting raw disk image
+xz --compress ${OIMG}

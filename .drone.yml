@@ -117,6 +117,12 @@ steps:
     environment:
       CTARGET: x86_64-multilib-linux-gnu
       target: sn2010
+  
+  - name: amd64:server-services
+    <<: *buildTemplate
+    environment:
+      CTARGET: x86_64-multilib-linux-gnu
+      target: server-services
 
   - name: arm:ecw5211-l-t
     <<: *buildTemplate
