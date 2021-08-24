@@ -1,0 +1,8 @@
+# server access
+enable getty@tty0.service
+# NOTE: This is required to force initial host key generation.
+disable sshd.socket
+enable sshd.service
+
+# required services
+enable docker
