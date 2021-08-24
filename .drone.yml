@@ -82,74 +82,11 @@ steps:
   
 
 # Device targets
-  - name: arm64:tn48m
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: tn48m
-    
-  - name: arm64:tn4810m
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: tn4810m
-
-  - name: arm64:tx4810
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: tx4810
-
-  - name: arm64:as5114-48x
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: as5114-48x
-
-  - name: arm64:rpi4
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: rpi4
-
-  - name: amd64:sn2010
-    <<: *buildTemplate
-    environment:
-      CTARGET: x86_64-multilib-linux-gnu
-      target: sn2010
-  
   - name: amd64:server-services
     <<: *buildTemplate
     environment:
       CTARGET: x86_64-multilib-linux-gnu
       target: server-services
-
-  - name: arm:ecw5211-l-t
-    <<: *buildTemplate
-    environment:
-      CTARGET: armv7a-unknown-linux-gnueabihf
-      target: ecw5211-l-t
-  
-
-# Generic targets
-  - name: arm:vmlinux
-    <<: *buildTemplate
-    environment:
-      CTARGET: armv7a-unknown-linux-gnueabihf
-      target: vmlinux
-
-  - name: arm64:vmlinux
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: vmlinux
-
-  - name: amd64:vmlinux
-    <<: *buildTemplate
-    environment:
-      CTARGET: x86_64-multilib-linux-gnu
-      target: vmlinux
-
 
 # System targets
   - name: arm:system
@@ -188,50 +125,6 @@ steps:
       CTARGET: x86_64-multilib-linux-musl
       target: system
 
-
-# Package targets
-  - name: arm:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: armv7a-unknown-linux-gnueabihf
-      target: package
-      PACKAGE: "sys-apps/ethtool"
- 
-  - name: arm64:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: package
-      PACKAGE: "sys-apps/ethtool"
-
-  - name: amd64:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: x86_64-multilib-linux-gnu
-      target: package
-      PACKAGE: "sys-apps/ethtool"
-
-  - name: arm-musl:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: armv7a-unknown-linux-musleabihf
-      target: package
-      PACKAGE: "sys-apps/ethtool"
-
-  - name: arm64-musl:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-musl
-      target: package
-      PACKAGE: "sys-apps/ethtool"
-
-  - name: amd64-musl:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: x86_64-multilib-linux-musl
-      target: package
-      PACKAGE: "sys-apps/ethtool" 
-
  
 # File transfer 
   - name: transferArtifacts
@@ -245,6 +138,7 @@ steps:
       DRONE_DIRECTORY_PATH:
         from_secret: droneDirectoryPath
     commands:
+      - echo $${DRONE_BRANCH}
       #- echo -e $${DRONE_PASSWORD} | openssl base64 -A -d > ./key
       #- chmod 600 ./key
       #- scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentityFile=./key -r $(cat branchName) $${DRONE_USER}@$${DRONE_SERVER}:$${DRONE_DIRECTORY_PATH}
