@@ -81,8 +81,6 @@ mount /dev/mapper/${ODEVN}p2 ${MDIR}
 	install -dm 700 ${MDIR}/root/.ssh
 	install -Tm 600 ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key.pub \
 		${MDIR}/root/.ssh/authorized_keys
-	cp ${SYSROOT}/usr/local/root/.ssh/authorized_keys2 ${MDIR}/root/.ssh/authorized_keys2
-
 	# NOTE: This enforces unique root filesystem identification.
 	sed -i "s/%%ROOTDEVICE%%/${ROOTDEVICE}/g" ${MDIR}/etc/fstab
 umount ${MDIR}
