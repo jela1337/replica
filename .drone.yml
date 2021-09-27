@@ -103,6 +103,7 @@ steps:
   - name: arm64:rpi4
     <<: *buildTemplate
     environment:
+      TARGET_DISTRO: debian
       CTARGET: aarch64-unknown-linux-gnu
       target: rpi4
 
