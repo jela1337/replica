@@ -60,7 +60,7 @@ RUN __renv__ __rdistfiles__ __rccache__ \
     sed -i "s/root:\*:/root\:\$6\$MIf334fS6fTaKihG\$FAoUg\.iIq0WSq\.zZ\.UZ70HrACKRkv9ZGBucyOsXk8hZpqCbkfdo7x\/UVhq7L5Lzd5HTNINQTCcAXttuqSBe070:/" \
         ${SYSROOT}/etc/shadow && \
     mv -f /usr/src/boot/*         ${SYSROOT}/boot/ && \
-    mv -f /usr/src/modules      ${SYSROOT}/lib/ || ( cat ${SYSROOT}/debootstrap/debootstrap.log; exit 1 )
+    mv -f /usr/src/modules/*      ${SYSROOT}/lib/modules/ || ( cat ${SYSROOT}/debootstrap/debootstrap.log; exit 1 )
     
 ')dnl
 
