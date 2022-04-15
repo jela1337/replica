@@ -97,7 +97,7 @@ mkfs.ext4 -F /dev/mapper/${PXEODEVN}p1
 mount /dev/mapper/${PXEODEVN}p1 ${PXEMDIR}
 	rsync --archive --hard-links --info=progress2 ${SYSROOT}/. ${PXEMDIR}
 	# SSH setup TO-DO
-umount ${MDIR}
+umount ${PXEMDIR}
 
 # setup first root partition
 mkfs.ext4 -F /dev/mapper/${ODEVN}p2
