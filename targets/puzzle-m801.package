@@ -45,7 +45,7 @@ EOF
 
 # Setup the image file as a loopback device for formatting
 # NOTE: Using `--partscan` here would register only in the default namespace.
-if ! ODEV=$(losetup --show --find ${OIMG}); then
+if ! ODEV=$(losetup --nooverlap --show --find ${OIMG}); then
 	echo "docker-entrypoint: unable to setup a loopback device!"
 	exit 1
 elif ! kpartx -usv ${ODEV}; then
