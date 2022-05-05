@@ -73,10 +73,10 @@ steps:
     'arm:vmlinux', 'arm64:vmlinux', 'amd64:vmlinux',
     
     # System targets
-    'arm:system', 'arm64:system', 'amd64:system', 'arm-musl:system', 'arm64-musl:system', 'amd64-musl:system',
+    'arm:system', 'arm64:system', 'amd64:system', 'arm-musl:system', 'arm64-musl:system', 'amd64-musl:system'
     
     # Package targets 
-    'arm64:package'
+    #'arm64:package'
     ]
 
 
@@ -252,12 +252,12 @@ steps:
 
 
 # Package targets 
-  - name: arm64:package
-    <<: *buildTemplate
-    environment:
-      CTARGET: aarch64-unknown-linux-gnu
-      target: package
-      PACKAGE: "sys-apps/ethtool"
+#  - name: arm64:package
+#    <<: *buildTemplate
+#    environment:
+#      CTARGET: aarch64-unknown-linux-gnu
+#      target: package
+#      PACKAGE: "sys-apps/ethtool"
 
 
 # Transfer Artifacts
