@@ -76,6 +76,8 @@ elif ! kpartx -usv ${PXEODEV}; then
 	exit 1
 fi
 
+ls -lah
+
 # Setup the image file as a loopback device for formatting
 # NOTE: Using `--partscan` here would register only in the default namespace.
 if ! ODEV=$(losetup --nooverlap --show --find ${OIMG}); then
