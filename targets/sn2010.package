@@ -67,14 +67,7 @@ sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${OIMG}
   q # done
 EOF
 
-# Setup the PXE image file as a loopback device for formatting
-if ! PXEODEV=$(losetup --nooverlap --show --find ${PXEIMG}); then
-	echo "docker-entrypoint: unable to setup a loopback device!"
-	exit 1
-elif ! kpartx -usv ${PXEODEV}; then
-	echo "docker-entrypoint: unable to update partition mappings!"
-	exit 1
-fi
+
 
 # Setup the image file as a loopback device for formatting
 # NOTE: Using `--partscan` here would register only in the default namespace.
@@ -82,6 +75,15 @@ if ! ODEV=$(losetup --nooverlap --show --find ${OIMG}); then
 	echo "docker-entrypoint: unable to setup a loopback device!"
 	exit 1
 elif ! kpartx -usv ${ODEV}; then
+	echo "docker-entrypoint: unable to update partition mappings!"
+	exit 1
+fi
+
+# Setup the PXE image file as a loopback device for formatting
+if ! PXEODEV=$(losetup --nooverlap --show --find ${PXEIMG}); then
+	echo "docker-entrypoint: unable to setup a loopback device!"
+	exit 1
+elif ! kpartx -usv ${PXEODEV}; then
 	echo "docker-entrypoint: unable to update partition mappings!"
 	exit 1
 fi
