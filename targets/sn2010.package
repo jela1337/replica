@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
 #
-# Copyright (c) 2022 Sartura Ltd.
+# Copyright (c) 2021 Sartura Ltd.
 #
 
 source /etc/profile
@@ -16,7 +16,7 @@ TDEVICE=mellanox-${BTARGET}
 # Output variables
 ODIR=/output
 OWNER=$(stat -c '%u:%g' ${ODIR})
-OIMG="${ODIR}/gentoo-${TPARCH}-${TDEVICE}.img"
+OIMG="${ODIR}/gentoo-normal-${TPARCH}-${TDEVICE}.img"
 PXEIMG="${ODIR}/gentoo-PXE-${TPARCH}-${TDEVICE}.img"
 OFILE=""
 OROOTFS=${WITH_ROOTFS:-0}
@@ -24,14 +24,14 @@ export XZ_OPT="-2 -T0" # multithreaded
 
 # Check whether the output directory exists
 if [[ ! -d ${ODIR} ]]; then
-	echo "docker-entrypoint: output directory does not exist!"
-	exit 1
+        echo "docker-entrypoint: output directory does not exist!"
+        exit 1
 fi
 
 # This file contains various data about installed packages, depgraph, etc.
 mv ${SYSROOT}/sysdesc ${ODIR}/sysdesc-${TPARCH}-${TDEVICE}.txt
 
-# Generate and partition an image for PXE boot
+# Generate and partition an image PXE boot
 fallocate -l 8G ${PXEIMG}
 sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${PXEIMG}
   g # create GUID Partition Table
@@ -43,28 +43,6 @@ sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${PXEIMG}
   w # write the partition table
   q # done
 EOF
-
-# Setup the PXE image file as a loopback device for formatting
-ls -lah 
-ls -lah /output
-if ! PXEODEV=$(losetup -v --nooverlap --show --find ${PXEIMG}); then
-	echo "docker-entrypoint: unable to setup a loopback device!"
-	exit 1
-elif ! kpartx -usv ${PXEODEV}; then
-	echo "docker-entrypoint: unable to update partition mappings!"
-	exit 1
-fi
-
-PXEMDIR=$(mktemp -d)
-PXEODEVN=$(basename ${PXEODEV})
-
-# setup PXE image partition
-mkfs.ext4 -F /dev/mapper/${PXEODEVN}p1
-mount /dev/mapper/${PXEODEVN}p1 ${PXEMDIR}
-	rsync --archive --hard-links --info=progress2 ${SYSROOT}/. ${PXEMDIR}
-umount ${PXEMDIR}
-
-sync && kpartx -dv ${PXEODEV} && losetup -vd ${PXEODEV}
 
 # Generate and partition an image for M.2 (S42) 3IE3
 fallocate -l 8G ${OIMG}
@@ -88,64 +66,64 @@ sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${OIMG}
   w # write the partition table
   q # done
 EOF
-
+sleep 2
+# Setup the PXE image file as a loopback device for formatting
+if ! PXEODEV=$(losetup -L --show --find ${PXEIMG}); then
+        echo "docker-entrypoint: unable to setup PXE a loopback device!"
+        exit 1
+elif ! kpartx -usv ${PXEODEV}; then
+        echo "docker-entrypoint: unable to update partition mappings!"
+        exit 1
+fi
+echo "PXE loop Done!"
+sleep 5
 # Setup the image file as a loopback device for formatting
 # NOTE: Using `--partscan` here would register only in the default namespace.
-if ! ODEV=$(losetup -v --nooverlap --show --find ${OIMG}); then
-	echo "docker-entrypoint: unable to setup a loopback device!"
-	exit 1
+if ! ODEV=$(losetup -L --show --find ${OIMG}); then
+        echo "docker-entrypoint: unable to setup a loopback device!"
+        exit 1
 elif ! kpartx -usv ${ODEV}; then
-	echo "docker-entrypoint: unable to update partition mappings!"
-	exit 1
+        echo "docker-entrypoint: unable to update partition mappings!"
+        exit 1
 fi
+echo "Normal loop Done!"
 
 MDIR=$(mktemp -d)
-
+PXEMDIR=$(mktemp -d)
+PXEODEVN=$(basename ${PXEODEV})
 ODEVN=$(basename ${ODEV})
 ROOTDEVICE=""
 
-
+# setup PXE image partition
+mkfs.ext4 -F /dev/mapper/${PXEODEVN}p1
+mount /dev/mapper/${PXEODEVN}p1 ${PXEMDIR}
+        rsync --archive --hard-links --info=progress2 ${SYSROOT}/. ${PXEMDIR}
+        # SSH setup TO-DO
+umount ${PXEMDIR}
 
 # setup first root partition
 mkfs.ext4 -F /dev/mapper/${ODEVN}p2
 ROOTDEVICE="PARTUUID=$(blkid /dev/mapper/${ODEVN}p2 -s PARTUUID -o value)"
 
 mount /dev/mapper/${ODEVN}p2 ${MDIR}
-	rsync --archive --hard-links --info=progress2 ${SYSROOT}/. ${MDIR}
+        rsync --archive --hard-links --info=progress2 ${SYSROOT}/. ${MDIR}
 
-	ssh-keygen -q -N '' -t ed25519 -C "$(whoami)@$(uname -n)-$(date -I)" \
-		-f ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key <<< "y" >/dev/null
+        ssh-keygen -q -N '' -t ed25519 -C "$(whoami)@$(uname -n)-$(date -I)" \
+                -f ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key <<< "y" >/dev/null
 
-	install -dm 700 ${MDIR}/root/.ssh
-	install -Tm 600 ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key.pub \
-		${MDIR}/root/.ssh/authorized_keys
+        install -dm 700 ${MDIR}/root/.ssh
+        install -Tm 600 ${ODIR}/openssh-${TPARCH}-${TDEVICE}-key.pub \
+                ${MDIR}/root/.ssh/authorized_keys
 
-	# NOTE: This enforces unique root filesystem identification
-	sed -i "s/%%ROOTDEVICE%%/${ROOTDEVICE}/g" ${MDIR}/etc/fstab
-umount ${MDIR}
-
-# setup EFI boot partition
-mkfs.vfat -F32 /dev/mapper/${ODEVN}p1
-mount /dev/mapper/${ODEVN}p1 ${MDIR}
-	mv ${SYSROOT}/boot/* ${MDIR}/
-
-	# bootloader binary
-	install -m644 \
-		${SYSROOT}/usr/lib/systemd/boot/efi/systemd-bootx64.efi \
-		${MDIR}/EFI/BOOT/BOOTx64.EFI
-
-	# NOTE: This enforces unique root filesystem identification.
-	sed -i "s/%%ROOTDEVICE%%/${ROOTDEVICE}/g" ${MDIR}/loader/entries/replica-linux.conf
-
-	# NOTE: Append additional kernel command line parameters
-	sed -i "s/^options /&console=ttyS0,115200n8 /g" ${MDIR}/loader/entries/replica-linux.conf
+        # NOTE: This enforces unique root filesystem identification
+        sed -i "s/%%ROOTDEVICE%%/${ROOTDEVICE}/g" ${MDIR}/etc/fstab
 umount ${MDIR}
 
 if (( OROOTFS )); then
-	# Package the root filesystem as a compressed archive
-	# NOTE: We use `.` to specify contents of the current (SYSROOT) directory.
-	OFILE="${ODIR}/rootfs-${TPARCH}-${TDEVICE}.tar.xz"
-	tar --directory=${SYSROOT} --totals --create --xz --file ${OFILE} .
+        # Package the root filesystem as a compressed archive
+        # NOTE: We use `.` to specify contents of the current (SYSROOT) directory.
+        OFILE="${ODIR}/rootfs-${TPARCH}-${TDEVICE}.tar.xz"
+        tar --directory=${SYSROOT} --totals --create --xz --file ${OFILE} .
 fi
 
 # Fix permissions
@@ -153,7 +131,7 @@ chown ${OWNER} -R ${ODIR}
 
 # Flush cached writes, remove devices
 sync && kpartx -dv ${ODEV} && losetup -vd ${ODEV}
-
+sync && kpartx -dv ${PXEODEV} && losetup -vd ${PXEODEV}
 
 # Compress resulting raw disk image
 xz --force --compress ${OIMG}
