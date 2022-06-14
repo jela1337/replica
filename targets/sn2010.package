@@ -45,6 +45,8 @@ sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${PXEIMG}
 EOF
 
 # Setup the PXE image file as a loopback device for formatting
+ls -lah 
+ls -lah /output
 if ! PXEODEV=$(losetup -v --nooverlap --show --find ${PXEIMG}); then
 	echo "docker-entrypoint: unable to setup a loopback device!"
 	exit 1
