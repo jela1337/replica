@@ -77,6 +77,7 @@ elif ! kpartx -usv ${PXEODEV}; then
 fi
 
 ls -lah
+ls -lah /output
 
 # Setup the image file as a loopback device for formatting
 # NOTE: Using `--partscan` here would register only in the default namespace.
