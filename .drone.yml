@@ -247,12 +247,12 @@ steps:
 
 
 # Package targets 
-#  - name: arm64:package
-#    <<: *buildTemplate
-#    environment:
-#      CTARGET: aarch64-unknown-linux-gnu
-#      target: package
-#      PACKAGE: "sys-apps/ethtool"
+  - name: arm64:package
+    <<: *buildTemplate
+    environment:
+      CTARGET: aarch64-unknown-linux-gnu
+      target: package
+      PACKAGE: "sys-apps/ethtool"
 
 
 # Transfer Artifacts
