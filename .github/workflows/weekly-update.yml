@@ -14,28 +14,4 @@ jobs:
             submodules: 'recursive'
         
       - run: |
-          git checkout -b weekly/update main
-          echo "DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
-      
-      - run: |
-          sed -i -e "s/GENTOO_TAG := [0-9]*$/GENTOO_TAG := ${{ env.DATE }}/" Makefile
-          git submodule update --recursive --remote
-
-      - run: |
-          echo "$GPG_PRIV_KEY" > /home/runner/private.gpg 
-          gpg --import --batch /home/runner/private.gpg 
-          (echo 5; echo y; echo save) | gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "$( gpg --list-packets /home/runner/private.gpg | awk '$1=="keyid:"{print$2;exit}')" trust
-          echo "KEY_ID=$(gpg --list-secret-keys --keyid-format=long | grep sec | grep -o -P '(?<=/)[A-Z0-9]{16}')" >> $GITHUB_ENV
-        env:
-          GPG_PRIV_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-
-      - run: |
-          echo "$GPG_PASS" | gpg --passphrase-fd 0 --pinentry-mode loopback --status-fd=2 -bsau "$KEY_ID"
-          git config user.signingkey "$KEY_ID"
-          git config user.name "Sartura Bot"
-          git config user.email "replica@sartura.hr"
-          git add .
-          git commit -s -S -m "Update Gentoo stage3 and repositories to ${{ env.DATE }}"
-          git push -f origin weekly/update
-        env:
-          GPG_PASS: ${{ secrets.GPG_PASSPHRASE }}
+          uname -a
