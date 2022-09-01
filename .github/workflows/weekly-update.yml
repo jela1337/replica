@@ -1,8 +1,5 @@
 name: Weekly update action
-on:
-  schedule:
-    - cron: '0 5 ? * THU'
-  workflow_dispatch:
+on: [push]
 
 jobs:
   weekly-update:
