@@ -41,7 +41,7 @@ RUN \
     # NOTE: Portage uses .keep files to track directories which are installed
     #       empty by default.
     find ${SYSROOT} -type f -name '\.keep*' -delete && \
-    rm -rf ${SYSROOT}/packages && \
+    rm -rf ${SYSROOT}/cache/binpkgs && \
     rm -rf ${SYSROOT}/etc/portage && \
     rm -rf ${SYSROOT}/var/db/pkg && \
     rm -rf ${SYSROOT}/var/cache/edb && \
