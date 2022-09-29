@@ -28,7 +28,7 @@ if ! PKGCPN=$(ROOT=${SYSROOT} qdepends --root=${SYSROOT} "${PACKAGE}" | cut -d':
 fi
 
 PKGPN=$(echo ${PKGCPN} | cut -d'/' -f2)
-PKGFILE=$(find ${SYSROOT}/packages -type f -name "${PKGPN}${PKGSUFFIX}")
+PKGFILE=$(find ${SYSROOT}/cache/binpkgs -type f -name "${PKGPN}${PKGSUFFIX}")
 qtbz2 --tarbz2 ${PKGFILE} --dir ${ODIR}
 
 # Flush cached writes
