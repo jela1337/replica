@@ -73,7 +73,7 @@ steps:
     'arm:vmlinux', 'arm64:vmlinux', 'amd64:vmlinux',
     
     # System targets
-    'arm:system', 'arm64:system', 'amd64:system', 'arm-musl:system', 'arm64-musl:system', 'amd64-musl:system',
+    'arm:system', 'arm64:system', 'amd64:system',
     
     # Package targets 
     'arm64:package'
@@ -230,24 +230,6 @@ steps:
     <<: *buildTemplateNoOutput
     environment:
       CTARGET: x86_64-multilib-linux-gnu
-      target: system
-
-  - name: arm-musl:system
-    <<: *buildTemplateNoOutput
-    environment:
-      CTARGET: armv7a-unknown-linux-musleabihf
-      target: system
-
-  - name: arm64-musl:system
-    <<: *buildTemplateNoOutput
-    environment:
-      CTARGET: aarch64-unknown-linux-musl
-      target: system
-
-  - name: amd64-musl:system
-    <<: *buildTemplateNoOutput
-    environment:
-      CTARGET: x86_64-multilib-linux-musl
       target: system
 
 
