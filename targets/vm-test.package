@@ -14,9 +14,6 @@ if [[ ! -d ${ODIR} ]]; then
 	echo "docker-entrypoint: output directory does not exist!"
 	exit 1
 else
-	# This file contains various data about installed packages, depgraph, etc.
-	mv ${SYSROOT}/sysdesc ${ODIR}/sysdesc-${TPARCH}-${BTARGET}.txt
-
 	ODIR=${ODIR}/${TPARCH}-${BTARGET}
 	[[ -d ${ODIR} ]] && rm -rf ${ODIR}
 	mkdir ${ODIR}
@@ -64,6 +61,7 @@ mount /dev/mapper/${ODEVN}p1 ${MDIR}
 umount ${MDIR}
 
 qemu-img convert -f raw -O qcow2 ${OIMG} ${QCOWIMG}
+rm -f ${OIMG}
 
 # Fix permissions
 chown ${OWNER} -R ${ODIR}
