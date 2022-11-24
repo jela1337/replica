@@ -50,7 +50,8 @@ COPY ./repos/debian/rpi4/config/multistrap.conf /var/tmp/ds
 RUN __renv__ __rdistfiles__ __rccache__ \
     mv ${SYSROOT}/boot          /var/tmp/boot && \
     mv ${SYSROOT}/lib/modules   /var/tmp/modules && \
-    #
+    # doaja ajsndakjsndasdjasldjlaskjdlaskdj
+    pwd && \
     rm -rf ${SYSROOT}/* && \
     chroot /var/tmp/ds multistrap -a ${TPARCH} -d /ms -f /multistrap.conf && \
     mv -f /var/tmp/ds/ms/* ${SYSROOT}/ && \
